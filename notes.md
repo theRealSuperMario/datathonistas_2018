@@ -1,5 +1,5 @@
 ## Caffe
-* Caffe and pytorch are installed in the py2caffe` envrionment on the dlvm-team08 vm.
+* Caffe and pytorch are installed in the `py2caffe` envrionment on the dlvm-team08 vm.
 * The fb detectron zoo is also setup there
 
 
