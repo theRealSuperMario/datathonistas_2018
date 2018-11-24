@@ -152,3 +152,26 @@ def colorize_seg_vals(seg_vals):
     return out_vals
 
 
+def segment_foreground(pcd_file, jpg_file, seg_file, save_ply=True):
+    cloud = PyntCloud.from_file(pcd_file)  # :PyntCloud
+    rgb_image = cv2.imread(jpg_file, -1).astype(np.uint8)[::-1, :, :]
+    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB)
+    seg_image = cv2.imread(seg_file, -1).astype(np.uint8)
+    seg_image = np.rollaxis(seg_image, 1, 0)
+    points = cloud.points.values[:, :3]
+
+    seg_vals = transfer_segmentation(seg_image, points)
+    color_vals = transfer_image(rgb_image, points)
+
+
+    color_seg_vals = colorize_seg_vals(seg_vals)
+    fg_array = points[seg_vals == 1]
+
+    output_file_name = os.path.basename(pcd_file)
+    output_file_name = os.path.splitext(pcd_file)[0]
+
+    if save_ply:
+        write_color_ply(output_file_name + '_color_seg.ply', points, color_seg_vals)
+        write_color_ply(output_file_name + '_rgb.ply', points, color_vals)
+        np.savetxt(output_file_name + '_fg.txt')
+    return fg_array
