@@ -1,13 +1,20 @@
 import cv2
+import numpy
 import numpy as np
+import pandas as pd
 
 from pylab import *
 import sys
-sys.path.insert(0, '..')
 
+from pyntcloud import PyntCloud
+from pyntcloud.io import write_ply
+
+sys.path.insert(0, '..')
+from src.tango import get_extrinsic_matrix, get_intrinsic_matrix, get_k
 from src.paths import PNG_FILES, PCD_FILES
 from src.cgmcore.utils import load_pcd_as_ndarray, pointcloud_to_rgb_map, show_rgb_map
-
+import os
+from matplotlib import pyplot as plt
 
 class Normalizer_min_max():
     min = None
@@ -60,3 +67,88 @@ def otsu_thresholding(img, kernel_size = 5):
     blur = cv2.GaussianBlur(img, (kernel_size, kernel_size), 0)
     ret3, th3 = cv2.threshold(blur.astype(np.uint8), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return th3
+
+
+class SegmentationData():
+    def __init__(self, root_dir = r'/home/sandro/Dokumente/WHo/denseposeoutputs/'):
+        self.root_dir = root_dir
+
+    def get_uv(self, mh_num, time_step, some_number, idx):
+        path = 'rgb_MH_WHH_{:04d}_{}_{}_{}_IUV.png'.format(mh_num, time_step, some_number, idx)
+        return os.path.join(self.root_dir, path)
+
+    def get_inds(self, mh_num, time_step, some_number, idx):
+        path = 'rgb_MH_WHH_{:04d}_{}_{}_{}_INDS.png'.format(mh_num, time_step, some_number, idx)
+        return os.path.join(self.root_dir, path)
+
+
+def write_color_ply(fname, points, color_vals):
+    df = pd.DataFrame(columns=['x', 'y', 'z', 'red', 'green', 'blue'])
+    df['x'] = points[:, 0]
+    df['y'] = points[:, 1]
+    df['z'] = points[:, 2]
+    df['red'] = color_vals[:, 0].astype(np.uint8)
+    df['green'] = color_vals[:, 1].astype(np.uint8)
+    df['blue'] = color_vals[:, 2].astype(np.uint8)
+    new_pc = PyntCloud(df)
+    write_ply(fname, new_pc.points, as_text=True)
+
+def transfer_segmentation(seg_image, pc_points):
+    hh, ww = seg_image.shape
+    ext_d = get_extrinsic_matrix(4)
+    r_vec = ext_d[:3, :3]
+    t_vec = -ext_d[:3, 3]
+    intrinsic = get_intrinsic_matrix()
+
+    k1, k2, k3 = get_k()
+    im_coords, _ = cv2.projectPoints(pc_points, r_vec, t_vec, intrinsic[:3, :3], np.array([k1, k2, 0, 0]))
+
+    n_points = pc_points.shape[0]
+    seg_vals = np.zeros(shape=(n_points), dtype=seg_image.dtype)
+
+    for i, t in enumerate(im_coords):
+        x, y = t.squeeze()
+        x = int(np.round(x))
+        y = int(np.round(y))
+        if x >= 0 and x < ww and y >= 0 and y < hh:
+            seg_vals[i] = seg_image[y, x]
+    return seg_vals
+
+
+def transfer_image(image, pc_points):
+    hh, ww, _ = image.shape
+    ext_d = get_extrinsic_matrix(4)
+    r_vec = ext_d[:3, :3]
+    t_vec = -ext_d[:3, 3]
+    intrinsic = get_intrinsic_matrix()
+
+    k1, k2, k3 = get_k()
+    im_coords, _ = cv2.projectPoints(pc_points, r_vec, t_vec, intrinsic[:3, :3], np.array([k1, k2, 0, 0]))
+
+    n_points = pc_points.shape[0]
+    color_vals = np.zeros_like(pc_points)
+
+    for i, t in enumerate(im_coords):
+        x, y = t.squeeze()
+        x = int(np.round(x))
+        y = int(np.round(y))
+        if x >= 0 and x < ww and y >= 0 and y < hh:
+            color_vals[i, :] = image[y, x]
+    return color_vals
+
+
+def colorize_seg_vals(seg_vals):
+    '''
+    given (N, 1) or (N) array of segmentation ids, returns a color representation for them
+    :param seg_vals:
+    :return:
+    '''
+    seg_vals = seg_vals.squeeze()
+    nums = np.linspace(0, 1, seg_vals.max() + 1)
+    np.random.shuffle(nums)
+    color_lookup = plt.cm.coolwarm(nums, bytes=True)
+
+    out_vals = np.array([color_lookup[s] for s in seg_vals])
+    return out_vals
+
+
