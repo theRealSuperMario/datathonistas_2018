@@ -22,7 +22,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import itertools
 
-# import pcl
+import pcl
 
 
 class Normalizer_min_max():
@@ -205,7 +205,7 @@ def segment_foreground(pcd_file, jpg_file, seg_file, save_ply=True):
     color_seg_vals = colorize_seg_vals(seg_vals)
 
     obj_ids, counts = np.unique(seg_image, return_counts=True)
-    counts[0] = 0 # foreground - dont care
+    counts[0] = 0  # foreground - dont care
 
     largest_obj = np.argmax(counts)
     fg_array = points[seg_vals == obj_ids[largest_obj]]
@@ -217,130 +217,130 @@ def segment_foreground(pcd_file, jpg_file, seg_file, save_ply=True):
         print(output_file_name)
         write_color_ply(output_file_name + '_color_seg.ply', points, color_seg_vals)
         write_color_ply(output_file_name + '_rgb.ply', points, color_vals)
-        write_color_ply(output_file_name + '_fg.ply', fg_array, np.ones_like(fg_array) * 255)
+        write_color_ply(output_file_name + '_fg.ply', fg_array, color_seg_vals[seg_vals == 1])
         np.savetxt(output_file_name + '_fg.txt', fg_array)
     return fg_array
 
 
-# def get_bounding_box_height(pcd_path_or_array, from_array=False):
-#     if from_array:
-#         p = pcl.from_array(pcd_path_or_array)
-#     else:
-#         p = pcl.load(pcd_path_or_array)
-#
-#     feature_extractor = pcl.MomentOfInertiaEstimation()
-#     feature_extractor.set_InputCloud(p)
-#     feature_extractor.compute()
-#
-#     [min_point_AABB, max_point_AABB] = feature_extractor.get_AABB()
-#     eccentricity = feature_extractor.get_Eccentricity()
-#     [major_value, middle_value, minor_value] = feature_extractor.get_EigenValues()
-#     [major_vector, middle_vector, minor_vector] = feature_extractor.get_EigenVectors()
-#     mass_center = feature_extractor.get_MassCenter()
-#     moment_of_inertia = feature_extractor.get_MomentOfInertia()
-#     [min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB] = feature_extractor.get_OBB()
-#
-#     bounding_box_coordinates = max_point_OBB - min_point_OBB
-#
-#     bounding_box_height = bounding_box_coordinates[0][0]
-#
-#     return bounding_box_height
-#
-#
-# def get_bbox_height(pcd_path_or_array, from_array=False):
-#     if from_array:
-#         p = pcl.PointCloud()
-#         p.from_array(pcd_path_or_array)
-#     else:
-#         p = pcl.load(pcd_path_or_array)
-#     feature_extractor = pcl.MomentOfInertiaEstimation()
-#     feature_extractor.set_InputCloud(p)
-#     feature_extractor.compute()
-#
-#     [min_point_AABB, max_point_AABB] = feature_extractor.get_AABB()
-#     eccentricity = feature_extractor.get_Eccentricity()
-#     [major_value, middle_value, minor_value] = feature_extractor.get_EigenValues()
-#     [major_vector, middle_vector, minor_vector] = feature_extractor.get_EigenVectors()
-#     mass_center = feature_extractor.get_MassCenter()
-#     moment_of_inertia = feature_extractor.get_MomentOfInertia()
-#     [min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB] = feature_extractor.get_OBB()
-#
-#     # calculate the difference of min and max
-#     bbox_difference = max_point_OBB - min_point_OBB
-#     bbox_height = bbox_difference[0][0]
-#
-#     return min_point_OBB, max_point_OBB, bbox_height, rotational_matrix_OBB, position_OBB
-#
-#
-# #     return min_point_AABB, max_point_AABB, bbox_height
-# #     return min_point_OBB_inv, max_point_OBB_inv, bbox_height
-#
-#
-# def get_points_OBB(min_point_OBB, max_point_OBB, rotational_matrix_OBB, position_OBB):
-#     p1 = (min_point_OBB[0][0], min_point_OBB[0][1], min_point_OBB[0][2])
-#     p2 = (min_point_OBB[0][0], min_point_OBB[0][1], max_point_OBB[0][2])
-#     p3 = (max_point_OBB[0][0], min_point_OBB[0][1], max_point_OBB[0][2])
-#     p4 = (max_point_OBB[0][0], min_point_OBB[0][1], min_point_OBB[0][2])
-#     p5 = (min_point_OBB[0][0], max_point_OBB[0][1], min_point_OBB[0][2])
-#     p6 = (min_point_OBB[0][0], max_point_OBB[0][1], max_point_OBB[0][2])
-#     p7 = (max_point_OBB[0][0], max_point_OBB[0][1], max_point_OBB[0][2])
-#     p8 = (max_point_OBB[0][0], max_point_OBB[0][1], min_point_OBB[0][2])
-#
-#     p1 = rotational_matrix_OBB @ p1 + position_OBB
-#     p2 = rotational_matrix_OBB @ p2 + position_OBB
-#     p3 = rotational_matrix_OBB @ p3 + position_OBB
-#     p4 = rotational_matrix_OBB @ p4 + position_OBB
-#     p5 = rotational_matrix_OBB @ p5 + position_OBB
-#     p6 = rotational_matrix_OBB @ p6 + position_OBB
-#     p7 = rotational_matrix_OBB @ p7 + position_OBB
-#     p8 = rotational_matrix_OBB @ p8 + position_OBB
-#
-#     points_OBB = np.asarray([p1, p2, p3, p4, p5, p6, p7, p8])
-#     points_OBB = points_OBB.reshape(8, 3)
-#
-#     return points_OBB
-#
-#
-# def render_pointcloud_with_bbox(pointcloud, bbox_points, save_path, title=None, col=None, cmap="gray"):
-#     """
-#     Renders a point-cloud.
-#     """
-#
-#     fig = plt.figure(figsize=(10, 10))
-#     ax = fig.add_subplot(111, projection='3d')
-#
-#     ax.scatter(bbox_points[:, 0], bbox_points[:, 1], bbox_points[:, 2], c='red', s=0.5, cmap=cmap, alpha=0.5)
-#     ax.scatter(pointcloud[:, 0], pointcloud[:, 1], pointcloud[:, 2], c=col, s=0.5, cmap=cmap, alpha=0.5)
-#
-#     edge = [
-#         [0, 1], [0, 3], [0, 4],
-#         [7, 3],
-#         [1, 5], [1, 2],
-#         [2, 3], [2, 6],
-#         [4, 5], [4, 7],
-#         [5, 6], [6, 7]
-#     ]
-#
-#     for e in edge:
-#         ax.plot(bbox_points[e, 0], bbox_points[e, 1], bbox_points[e, 2], c='red' if e == [5, 6] else 'black',
-#                 lw=4 if e == [5, 6] else 2)
-#
-#     ax.set_xlabel("x")
-#     ax.set_ylabel("y")
-#     ax.set_zlabel("z")
-#
-#     fig.savefig(save_path)
-#
-#     return fig
-#
-#
-# def get_bbox_and_height(segmented_file_or_array, save_path, from_array=False):
-#     if not from_array:
-#         point_cloud = load_pcd_as_ndarray(segmented_file_or_array)
-#     else:
-#         point_cloud = segmented_file_or_array
-#     min_OBB, max_OBB, height, rot_mat_OBB, position_OBB = get_bbox_height(point_cloud, True)
-#
-#     points_bbox = get_points_OBB(min_OBB, max_OBB, rot_mat_OBB, position_OBB)
-#     fig = render_pointcloud_with_bbox(point_cloud, points_bbox, save_path)
-#     return points_bbox, height
+def get_bounding_box_height(pcd_path_or_array, from_array=False):
+    if from_array:
+        p = pcl.from_array(pcd_path_or_array)
+    else:
+        p = pcl.load(pcd_path_or_array)
+
+    feature_extractor = pcl.MomentOfInertiaEstimation()
+    feature_extractor.set_InputCloud(p)
+    feature_extractor.compute()
+
+    [min_point_AABB, max_point_AABB] = feature_extractor.get_AABB()
+    eccentricity = feature_extractor.get_Eccentricity()
+    [major_value, middle_value, minor_value] = feature_extractor.get_EigenValues()
+    [major_vector, middle_vector, minor_vector] = feature_extractor.get_EigenVectors()
+    mass_center = feature_extractor.get_MassCenter()
+    moment_of_inertia = feature_extractor.get_MomentOfInertia()
+    [min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB] = feature_extractor.get_OBB()
+
+    bounding_box_coordinates = max_point_OBB - min_point_OBB
+
+    bounding_box_height = bounding_box_coordinates[0][0]
+
+    return bounding_box_height
+
+
+def get_bbox_height(pcd_path_or_array, from_array=False):
+    if from_array:
+        p = pcl.PointCloud()
+        p.from_array(pcd_path_or_array)
+    else:
+        p = pcl.load(pcd_path_or_array)
+    feature_extractor = pcl.MomentOfInertiaEstimation()
+    feature_extractor.set_InputCloud(p)
+    feature_extractor.compute()
+
+    [min_point_AABB, max_point_AABB] = feature_extractor.get_AABB()
+    eccentricity = feature_extractor.get_Eccentricity()
+    [major_value, middle_value, minor_value] = feature_extractor.get_EigenValues()
+    [major_vector, middle_vector, minor_vector] = feature_extractor.get_EigenVectors()
+    mass_center = feature_extractor.get_MassCenter()
+    moment_of_inertia = feature_extractor.get_MomentOfInertia()
+    [min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB] = feature_extractor.get_OBB()
+
+    # calculate the difference of min and max
+    bbox_difference = max_point_OBB - min_point_OBB
+    bbox_height = bbox_difference[0][0]
+
+    return min_point_OBB, max_point_OBB, bbox_height, rotational_matrix_OBB, position_OBB
+
+
+#     return min_point_AABB, max_point_AABB, bbox_height
+#     return min_point_OBB_inv, max_point_OBB_inv, bbox_height
+
+
+def get_points_OBB(min_point_OBB, max_point_OBB, rotational_matrix_OBB, position_OBB):
+    p1 = (min_point_OBB[0][0], min_point_OBB[0][1], min_point_OBB[0][2])
+    p2 = (min_point_OBB[0][0], min_point_OBB[0][1], max_point_OBB[0][2])
+    p3 = (max_point_OBB[0][0], min_point_OBB[0][1], max_point_OBB[0][2])
+    p4 = (max_point_OBB[0][0], min_point_OBB[0][1], min_point_OBB[0][2])
+    p5 = (min_point_OBB[0][0], max_point_OBB[0][1], min_point_OBB[0][2])
+    p6 = (min_point_OBB[0][0], max_point_OBB[0][1], max_point_OBB[0][2])
+    p7 = (max_point_OBB[0][0], max_point_OBB[0][1], max_point_OBB[0][2])
+    p8 = (max_point_OBB[0][0], max_point_OBB[0][1], min_point_OBB[0][2])
+
+    p1 = rotational_matrix_OBB @ p1 + position_OBB
+    p2 = rotational_matrix_OBB @ p2 + position_OBB
+    p3 = rotational_matrix_OBB @ p3 + position_OBB
+    p4 = rotational_matrix_OBB @ p4 + position_OBB
+    p5 = rotational_matrix_OBB @ p5 + position_OBB
+    p6 = rotational_matrix_OBB @ p6 + position_OBB
+    p7 = rotational_matrix_OBB @ p7 + position_OBB
+    p8 = rotational_matrix_OBB @ p8 + position_OBB
+
+    points_OBB = np.asarray([p1, p2, p3, p4, p5, p6, p7, p8])
+    points_OBB = points_OBB.reshape(8, 3)
+
+    return points_OBB
+
+
+def render_pointcloud_with_bbox(pointcloud, bbox_points, save_path, title=None, col=None, cmap="gray"):
+    """
+    Renders a point-cloud.
+    """
+
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(bbox_points[:, 0], bbox_points[:, 1], bbox_points[:, 2], c='red', s=0.5, cmap=cmap, alpha=0.5)
+    ax.scatter(pointcloud[:, 0], pointcloud[:, 1], pointcloud[:, 2], c=col, s=0.5, cmap=cmap, alpha=0.5)
+
+    edge = [
+        [0, 1], [0, 3], [0, 4],
+        [7, 3],
+        [1, 5], [1, 2],
+        [2, 3], [2, 6],
+        [4, 5], [4, 7],
+        [5, 6], [6, 7]
+    ]
+
+    for e in edge:
+        ax.plot(bbox_points[e, 0], bbox_points[e, 1], bbox_points[e, 2], c='red' if e == [5, 6] else 'black',
+                lw=4 if e == [5, 6] else 2)
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+
+    fig.savefig(save_path)
+
+    return fig
+
+
+def get_bbox_and_height(segmented_file_or_array, save_path, from_array=False):
+    if not from_array:
+        point_cloud = load_pcd_as_ndarray(segmented_file_or_array)
+    else:
+        point_cloud = segmented_file_or_array
+    min_OBB, max_OBB, height, rot_mat_OBB, position_OBB = get_bbox_height(point_cloud, True)
+
+    points_bbox = get_points_OBB(min_OBB, max_OBB, rot_mat_OBB, position_OBB)
+    fig = render_pointcloud_with_bbox(point_cloud, points_bbox, save_path)
+    return points_bbox, height
